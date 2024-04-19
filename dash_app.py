@@ -1,5 +1,4 @@
 import pandas as pd
-import seaborn as sns
 import matplotlib.pyplot as plt
 import plotly.express as px
 from plotly.graph_objs import Figure, Bar
@@ -394,5 +393,4 @@ def update_bar_chart(cities):
                        #the output which is figure
 
 if __name__ == "__main__":
-    app.run_server(port=8081)
-    
+    app.run_server()
