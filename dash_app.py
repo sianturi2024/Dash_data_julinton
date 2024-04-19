@@ -9,22 +9,48 @@ from dash import Dash, dcc, html, callback
 from dash.dependencies import Input, Output, State
 from dash import dash_table
 
-# read data
+
 df_weather = pd.read_csv('staging_focecast_hour.csv')
-# drop column
+
 df = df_weather[['date', 'city', 'temp_c', 'humidity', 'wind_kph', 'condition_text']]
 
-#merge data
-df_1 = pd.read_csv('location_target_weather.csv')
-
+## average
 average_weather = df.groupby('city').agg({
     'temp_c': 'mean',
     'wind_kph': 'mean',
     'humidity': 'mean'
 }).reset_index()
 
+average_weather
+
+## name columns
+column_renaming = {'city': 'city',  # Replace with desired names
+                   'temp_c': 'avg_temp_c',
+                   'wind_kph': 'avg_wind_kph',
+                   'humidity': 'avg_humidity'}
+
+# Rename the columns
+average_weather.rename(columns=column_renaming, inplace=True)
+average_weather
+
+#figure
+fig = px.choropleth(average_weather, 
+                    locations='city', 
+                    locationmode="country names",  
+                    color='avg_humidity',
+                    hover_name='city',
+                    color_continuous_scale="Viridis",  
+                    title='Average Weather by City'
+                   )
+
+# Show the plot
+fig.show()
+
+df_1 = pd.read_csv('location_target_weather.csv')
+
 merged_df = average_weather.merge(df_1, how='left', on=['city'], sort=True)
 
+#figure 1
 fig1 = px.scatter_mapbox(
                         data_frame=merged_df,
                         lat='lat', 
@@ -41,11 +67,14 @@ fig1 = px.scatter_mapbox(
 graph1 = dcc.Graph(figure=fig1)
 fig1.show()
 
+#fig2
+
 fig2 = px.histogram(df, x="temp_c", color="city", marginal="box", title="Distribution of Temperature by City")
 fig2.update_layout(bargap=0.1)  
 
 graph2 = dcc.Graph(figure=fig2)
 
+#fig3
 
 fig3 = px.line(df, x="date", y="temp_c", color="city", title="Temperature Trend Over Time")
 
@@ -53,12 +82,13 @@ fig3.update_layout(xaxis_title="Date & Time")
 
 graph3 = dcc.Graph(figure=fig3)
 
-
+#fig4
 fig4 = px.box(df, x="condition_text", y="temp_c", title="Temperature Distribution by Weather Condition")
 
 fig4.update_layout(xaxis_title="Weather Condition", yaxis_title="Temperature (°C)")
 graph4 = dcc.Graph(figure=fig4)
 
+#data cluster
 
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
@@ -86,6 +116,8 @@ fig5.update_layout(
 )
 
 graph5 = dcc.Graph(figure=fig5)
+
+#prediction temperature
 
 from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import train_test_split
@@ -168,6 +200,8 @@ fig7 = px.scatter(temperature_comparison_df, x='Date',
 graph7 = dcc.Graph(figure=fig7)
 fig7.show()
 
+# paris
+
 # Filter data for Paris
 paris_data = df[df['city'] == 'Paris']
 X = paris_data[['day']]
@@ -233,6 +267,8 @@ fig8 = px.scatter(temperature_comparison_df, x='Date',
 
 graph8 = dcc.Graph(figure=fig8)
 fig8.show()
+
+# Djakarta
 
 # Filter data for Paris
 jakarta_data = df[df['city'] == 'Jakarta']
@@ -311,9 +347,6 @@ d_table = dash_table.DataTable(df.to_dict('records'),
                                   'color': 'black','fontWeight': 'bold'
     })
 
-app =dash.Dash(external_stylesheets=[dbc.themes.DARKLY])
-server = app.server
-
 # just adding the multi = True parameter for our dropdown
 
 graph = dcc.Graph()
@@ -321,13 +354,15 @@ countries =df['city'].unique().tolist()
 
 app =dash.Dash(external_stylesheets=[dbc.themes.DARKLY])
 
-
+#since we are using multi parameter, this time we need a list of the all unique values 
+#in the "country" column to use in the function of the callback 
 
 #changing the color of the dropdown value
 
 dropdown = dcc.Dropdown(['Berlin', 'Osaka-Shi', 'Paris', 'London', 'Jakarta'], value=['Berlin', 'Osaka-Shi', 'Paris', 'London', 'Jakarta'], 
                         clearable=False, multi=True, style ={'paddingLeft': '30px', 
                                                              "backgroundColor": "#222222", "color": "#222222"})
+#we added the styling to the dropdown menu
 
 #we also moved the dropdown menu a bit to the left side
 
